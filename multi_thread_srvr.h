@@ -40,9 +40,9 @@ typedef struct
 typedef struct
 {
 	char address[17];			/* client's address */
-	int port;					/* remote port for client */
-	unsigned long requests;		/* total requests generated */
-	unsigned long sent_data;	/* total data sent to */
+	int port;					/* client's port number */
+	unsigned long requests;		/* total requests from client */
+	unsigned long sent_data;	/* total data sent from client */
 } ClntStats;
 
 
