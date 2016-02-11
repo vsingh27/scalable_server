@@ -1,3 +1,21 @@
+/*---------------------------------------------------------------------------------------
+--	SOURCE FILE:		multi_thread_srvr.cpp -   A simple multiplexed echo server using TCP
+--
+--	PROGRAM:		mt_srvr.exe
+--
+--	FUNCTIONS:		Berkeley Socket API
+--
+--	DATE:			February 11, 2016
+--
+--	DESIGNERS: Rizwan Ahmed, Vishav Singh
+--
+--				
+--	PROGRAMMER: Rizwan Ahmed, Vishav Singh
+--
+--	NOTES:
+--	The program will accept TCP connections from multiple client machines.
+-- 	The program will read data from each client socket and simply echo it back.
+---------------------------------------------------------------------------------------*/
 #include "multi_thread_srvr.h"
 
 void *serve_clients(void *ptr)
