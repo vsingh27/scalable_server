@@ -1,6 +1,8 @@
 #ifndef WEB_HELPER
 #define WEB_HELPER
 void error_handler(const char* str);
-int _Establish_TCP_Connection(char* serverName, int port);
+int establish_tcp_connection(char* serverName, int port);
+int send_data(int sd, char* data, int size);
+char* read_data(int sd, char* data, int size);
 
 #endif

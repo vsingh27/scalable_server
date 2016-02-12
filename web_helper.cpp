@@ -17,7 +17,7 @@ void error_handler(const char* str)
     exit(EXIT_FAILURE);
 }
 
-int _Establish_TCP_Connection(char* serverName, int port)
+int establish_tcp_connection(char* serverName, int port)
 {
     struct sockaddr_in server;
     struct hostent *hp;
@@ -44,4 +44,25 @@ int _Establish_TCP_Connection(char* serverName, int port)
 
     printf("connected: Server Name: %s\n", hp->h_name);
     return sd;
+}
+
+int send_data(int sd, char* data, int size)
+{
+  printf("Sending Data..\n");
+  	send (sd, data, size, 0);
+}
+
+char* read_data(int sd, char* data, int size)
+{
+  printf("Receiving Data..\n");
+  char* bp;
+  bp = data;
+  int bytes_to_read = size;
+  int n = 0;
+  while((n = recv(sd, data, bytes_to_read,0)) < size)
+  {
+    bp += n;
+    bytes_to_read -= n;
+  }
+   return data;
 }
