@@ -1,5 +1,47 @@
+/*---------------------------------------------------------------------------------------
+--	SOURCE FILE: multi_thread_srvr.cpp -   A simple multiplexed echo server using TCP
+--
+--	PROGRAM: mt_srvr.exe
+--
+--	FUNCTIONS:   int main(int argc, char *argv[])
+--               void *serve_clients(void *ptr)
+--               void accept_connect(int fd)
+--               int find_free_thread(void)
+--               int find_free_client(int thread_num)
+--               void kill_server(int sig)
+--
+--	DATE: February 11, 2016
+--
+--	DESIGNERS: Rizwan Ahmed, Vishav Singh
+--
+--				
+--	PROGRAMMER: Rizwan Ahmed, Vishav Singh
+--
+--	NOTES:
+--	The program will accept TCP connections from multiple client machines.
+-- 	The program will read data from each client socket and simply echo it back.
+--  When the user presses CTRL+C, the program will close all sockets and write stats
+--  to a file before terminating.
+---------------------------------------------------------------------------------------*/
 #include "multi_thread_srvr.h"
 
+/*---------------------------------------------------------------------------------------
+-- FUNCTION: serve_clients
+--
+-- DATE: February 11, 2016
+--
+-- DESIGNERS: Rizwan Ahmed, Vishav Singh
+--
+-- PROGRAMMERS: Rizwan Ahmed, Vishav Singh
+--
+-- RETURNS: void / NULL
+--
+-- NOTES:
+-- Creates a structure that stores the thread ID and file descriptor of the socket
+-- connected to a client. If a client disconnects, the file descriptor gets closed here.
+-- If there are no clients connected, then the thread is killed. Otherwise, update
+-- the number of requests made and data sent by the client.
+---------------------------------------------------------------------------------------*/
 void *serve_clients(void *ptr)
 {
 	SocketThread *thread = (SocketThread *)ptr;
@@ -45,6 +87,22 @@ void *serve_clients(void *ptr)
 	return NULL;
 }
 
+/*---------------------------------------------------------------------------------------
+-- FUNCTION: accept_connect
+--
+-- DATE: February 11, 2016
+--
+-- DESIGNERS: Rizwan Ahmed, Vishav Singh
+--
+-- PROGRAMMERS: Rizwan Ahmed, Vishav Singh
+--
+-- RETURNS: void
+--
+-- NOTES: Uses the accept() system call to create a new socket, creates a new struct
+-- that stores data on a client, and creates a thread for the socket if it hasn't
+-- already. It prints an error message if the maximum number of threads or clients
+-- has been reached.
+---------------------------------------------------------------------------------------*/
 void accept_connect(int fd)
 {
 	int fd_client, thread_num, client_num, socket_buf;
@@ -96,6 +154,19 @@ void accept_connect(int fd)
 	fflush(stdout);
 }
 
+/*---------------------------------------------------------------------------------------
+-- FUNCTION: find_free_thread
+--
+-- DATE: February 11, 2016
+--
+-- DESIGNERS: Rizwan Ahmed, Vishav Singh
+--
+-- PROGRAMMERS: Rizwan Ahmed, Vishav Singh
+--
+-- RETURNS: Index in array of threads on success, -1 on failure
+--
+-- NOTES: Checks for any threads that are not at their limit in serving clients.
+---------------------------------------------------------------------------------------*/
 int find_free_thread(void)
 {
 	int i;
@@ -107,7 +178,19 @@ int find_free_thread(void)
 	return -1;
 }
 
-
+/*---------------------------------------------------------------------------------------
+-- FUNCTION: find_free_client
+--
+-- DATE: February 11, 2016
+--
+-- DESIGNERS: Rizwan Ahmed, Vishav Singh
+--
+-- PROGRAMMERS: Rizwan Ahmed, Vishav Singh
+--
+-- RETURNS: Index in array of client file descriptors on success, -1 on failure.
+--
+-- NOTES: Checks if a thread has any more room for more clients. 
+---------------------------------------------------------------------------------------*/
 int find_free_client(int thread_num)
 {
 	int i;
@@ -119,8 +202,20 @@ int find_free_client(int thread_num)
 	return -1;
 }
 
-/*kill all threads and connections then write to a file when
-user presses CTRL-C*/
+/*---------------------------------------------------------------------------------------
+-- FUNCTION: kill_server
+--
+-- DATE: February 11, 2016
+--
+-- DESIGNERS: Rizwan Ahmed, Vishav Singh
+--
+-- PROGRAMMERS: Rizwan Ahmed, Vishav Singh
+--
+-- RETURNS: void
+--
+-- NOTES: This is the signal handler that kills all threads and closes all sockets
+-- before writing statistics to a CSV file and exiting.
+---------------------------------------------------------------------------------------*/
 void kill_server(int sig)
 {
 	FILE *file;
@@ -157,13 +252,27 @@ void kill_server(int sig)
 
 }
 
-/*MAIN ENTRY POINT*/
+/*---------------------------------------------------------------------------------------
+-- FUNCTION: main
+--
+-- DATE: February 11, 2016
+--
+-- DESIGNERS: Rizwan Ahmed, Vishav Singh
+--
+-- PROGRAMMERS: Rizwan Ahmed, Vishav Singh
+--
+-- RETURNS: 0 on exit
+--
+-- NOTES: Main entry point of the program. Sets up listening socket and array of thread
+-- structs. Accepts connections from clients until it is overwhelmed or user presses
+-- CTRL+C to kill the server.
+---------------------------------------------------------------------------------------*/
 int main(int argc, char *argv[])
 {
 	struct sockaddr_in listen_addr;
 	int listen_fd, i, k, reuseaddr_on = 1;
 
-	/*write stats to file before killing server when user presses CTRL-C */
+	/*write stats to file before killing server when user presses CTRL+C */
 	(void)signal(SIGINT, kill_server);
 
 	/* create listening socket */

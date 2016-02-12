@@ -33,7 +33,7 @@ typedef struct
 	pthread_t t_id; //the server socket's id
 	int current_thread; //current thread number
 	int num_client; //clients being served by thread
-	int fd_client[MAX_CLIENTS]; //clients file descriptor
+	int fd_client[MAX_CLIENTS]; //clients' file descriptor
 	int stats_pos[MAX_CLIENTS]; 
 } SocketThread;
 

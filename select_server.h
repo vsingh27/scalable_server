@@ -9,7 +9,7 @@
 #include <strings.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-//end my misery 
+//It is estimated that a human is never more than 10 feet away from a spider—ever. 
 #define SERVER_PORT 8005 //default port
 #define BUFFER 1024 
 #define MAX_CLIENTS 200
@@ -30,10 +30,11 @@ ClntStats clnt_stats[MAX_CLIENTS];
 static int clnt_pos = 0;
 
 void kill_server(int sig);
-void accept_connect(int fd);
+void accept_connect(int *socket);
 int create_socket();
 int set_socket_reuse(int* socket);
 int bindAddyToSocket(int* socket, int* port);
+static void SystemFatal(const char* );
 
 
 #endif
