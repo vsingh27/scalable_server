@@ -56,8 +56,6 @@ int totalSessionCount;
 int numRequests;
 int timeToServe;
 
-
-
 char* generate_data(char* data,int size)
 {
         int k=0;
@@ -79,7 +77,7 @@ int worker_process(char* serverName, int port, char* sendData, char* recData, in
                 fflush(stdout);
                 close (sd);
         }
-        return (0);
+        return EXIT_SUCCESS;
 }
 
 int main(int argc, char **argv)
