@@ -46,10 +46,11 @@ int establish_tcp_connection(char* serverName, int port)
     return sd;
 }
 
-int send_data(int sd, char* data, int size)
+void send_data(int sd, char* data, int size)
 {
   printf("Sending Data..\n");
   	send (sd, data, size, 0);
+
 }
 
 char* read_data(int sd, char* data, int size)
