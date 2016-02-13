@@ -17,7 +17,7 @@
 #include <errno.h>
 #include <assert.h>
 #include <sys/wait.h>
-//It is estimated that a human is never more than 10 feet away from a spider�ever.
+//It is estimated that a human is never more than 10 feet away from a spider.
 #define SERVER_PORT 8005 //default port
 #define BUFFER 1024
 #define MAX_CLIENTS 700
@@ -43,12 +43,5 @@ void* run_server(int serv_port);
 void* live_stats();
 ClntStats * get_stats(char * ipAddress);
 int client_exists(char * ipAddress);
-
-
-int create_socket();
-int set_socket_reuse(int* socket);
-int bindAddyToSocket(int* socket, int* port);
-static void SystemFatal(const char* );
-
 
 #endif
