@@ -2,7 +2,7 @@
 #define WEB_HELPER
 void error_handler(const char* str);
 int establish_tcp_connection(char* serverName, int port);
-void send_data(int sd, char* data, int size);
+int send_data(int sd, char* data, int size);
 char* read_data(int sd, char* data, int size);
 typedef struct
 {

@@ -69,11 +69,12 @@ char* generate_data(char* data,int size)
         int k=0;
         for (int i=0; i< size; i++)
         {
+          if(k == 122)
+          {
+                  k = 0;
+          }
                 data[i] = (char)(97 + (k++));
-                if(k == 122)
-                {
-                        k = 0;
-                }
+
         }
         return data;
 }
@@ -82,14 +83,20 @@ void print_stats(int)
 {
         sem_wait(printLock);
         ofstream statistics_file;
-        statistics_file.open ("example.bin", ios::out | ios::app | ios::binary);
-        statistics_file<<"ProcessID," <<"RTT," << "Bytes Sent,"<<"Number of Requests\n";
+        statistics_file.open (STATS_FILE, ios::out | ios::app | ios::binary);
+        int totalRequests = 0;
         for( map<unsigned int, stats>::const_iterator it = statData.begin(); it != statData.end(); ++it )
         {
+
                 unsigned int key = it->first;
+                printf("The key is %u\n",key );
                 stats value = it->second;
+                totalRequests = totalRequests+ value.numRequests;
                 statistics_file<<key<<","<<value.timeToServe<<","<<value.bytesSent<<","<<value.numRequests<<"\n";
+
         }
+        statistics_file<<"Total Requests"<<","<<","<<totalRequests<<"\n";
+        statistics_file.close();
         sem_post(printLock);
         exit(0);
 }
@@ -102,13 +109,14 @@ int worker_process(char* serverName, int port, char* sendData, char* recData, in
 
         for (size_t i = 0; i < numReuest; i++) {
                 gettimeofday(&tim,NULL);
-                double t1 = tim.tv_sec+(tim.tv_usec/1000000.0);
-                send_data(sd, sendData, (int)BUFFER_LEN);
+                double t1 = tim.tv_sec+(tim.tv_usec);
+                int num_bytes = 0;
+                num_bytes= send_data(sd, sendData, (int)BUFFER_LEN);
                 read_data(sd,recData, (int)BUFFER_LEN);
                 gettimeofday(&tim,NULL);
-                double t2 = tim.tv_sec+(tim.tv_usec/1000000.0);
+                double t2 = tim.tv_sec+(tim.tv_usec);
                 stats_struc.timeToServe = t2-t1;
-                stats_struc.bytesSent = sizeof(sendData);
+                stats_struc.bytesSent = num_bytes;
                 stats_struc.numRequests = numReuest;
                 stats_struc.processID = getpid();
                 ptrMap->insert(pair<unsigned int, stats>(pid,stats_struc));
@@ -138,6 +146,12 @@ int main(int argc, char **argv)
         generate_data(sbuf,BUFFER_LEN);
         //printf("%s\n",sbuf );
         pid_t pid;
+
+        ofstream statistics_file;
+        statistics_file.open (STATS_FILE, ios::out | ios::app | ios::binary);
+        statistics_file<<"ProcessID," <<"RTT," << "Bytes Sent,"<<"Number of Requests\n";
+        statistics_file.close();
+
         switch(argc)
         {
         case 2:
@@ -175,7 +189,7 @@ int main(int argc, char **argv)
         }
         }
 
-        ptrMap =  (map<unsigned int, stats>*)mmap(0, processCount * sizeof(map<unsigned int, stats>), PROT_READ | PROT_WRITE, MAP_SHARED, -1, 0);
+      // ptrMap =  (map<unsigned int, stats>*)mmap(0, processCount * sizeof(map<unsigned int, stats>), PROT_READ | PROT_WRITE, MAP_SHARED, -1, 0);
 
         printLock = (sem_t*) mmap(0,sizeof(sem_t),PROT_READ|PROT_WRITE,MAP_SHARED|MAP_ANONYMOUS,-1,0);
 
@@ -185,9 +199,9 @@ int main(int argc, char **argv)
                 error_handler("Print Lock mmap");
         }
 
-        if (ptrMap) {
+        /*if (ptrMap) {
                 error_handler("Map mmap");
-        }
+        }*/
 
         if (sem_init(printLock,1,1) < 0)
         {
@@ -200,6 +214,7 @@ int main(int argc, char **argv)
                 {
                 case 0:
                         worker_process(serverName, serverPort, sbuf, rbuf,transmissionCount);
+                        kill(getpid(), SIGINT);
                         exit(0);
                         break;
                 }
@@ -211,5 +226,6 @@ int main(int argc, char **argv)
                         pid_t childpid = wait(NULL);
                 }
         }
+
         return 0;
 }
