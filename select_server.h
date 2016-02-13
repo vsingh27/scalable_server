@@ -43,5 +43,6 @@ void* run_server(int serv_port);
 void* live_stats();
 ClntStats * get_stats(char * ipAddress);
 int client_exists(char * ipAddress);
+static void SystemFatal(const char* );
 
 #endif
