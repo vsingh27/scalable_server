@@ -21,19 +21,24 @@
 
 typedef struct
 {
-	char address[17]; /* client's address */
+	char address[32]; /* client's address */
 	int port; /* client's port number */
-	unsigned long requests; /* total requests from client */
-	unsigned long sent_data; /* total data sent from client */
+	int total_connect; /*total connections made*/
+	int curr_connect; /*current connections*/
+	long total_message; /*total messages received*/
+	long message; /* current message*/
+	long total_data; /*total data received from client*/
+	long curr_data; /*current data received from client*/
 } ClntStats;
-
-ClntStats clnt_stats[MAX_CLIENTS];
-
-static int clnt_pos = 0;
 
 void kill_server(int sig);
 void accept_connect(int *socket);
-void* run_server(int servPort);
+void* run_server(int serv_port);
+void* live_stats();
+ClntStats * get_stats(char * ipAddress);
+int client_exists(char * ipAddress);
+
+
 int create_socket();
 int set_socket_reuse(int* socket);
 int bindAddyToSocket(int* socket, int* port);
