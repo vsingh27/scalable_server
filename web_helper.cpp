@@ -49,7 +49,9 @@ int establish_tcp_connection(char* serverName, int port)
 int send_data(int sd, char* data, int size)
 {
   printf("Sending Data..\n");
-  	send (sd, data, size, 0);
+  int numBytes;
+  	numBytes =send (sd, data, size, 0);
+return numBytes;
 }
 
 char* read_data(int sd, char* data, int size)
