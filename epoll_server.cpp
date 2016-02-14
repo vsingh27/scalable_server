@@ -20,7 +20,7 @@
 #define TRUE    1
 #define FALSE     0
 #define EPOLL_QUEUE_LEN 256
-#define BUFLEN    80
+#define BUFLEN    1024
 #define SERVER_TCP_PORT 7000
 #define PROCESS_COUNT            5      //Default No of Process to Spawn
 #define LOCAL_HOST "localhost"
