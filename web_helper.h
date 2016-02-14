@@ -5,6 +5,7 @@ int establish_tcp_connection(char* serverName, int port);
 int send_data(int sd, char* data, int size);
 char* read_data(int sd, char* data, int size);
 int server_socket_non_blocking(int port, char* hostName);
+int process_socket(int fd, int size);
 typedef struct
 {
         unsigned int timeToServe;
