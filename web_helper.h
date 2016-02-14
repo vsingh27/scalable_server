@@ -11,4 +11,11 @@ typedef struct
         unsigned int numRequests;
         unsigned int processID;
 }stats;
+
+typedef struct
+{
+        int fd;
+        struct sockaddr hostAddr;
+        struct sockaddr remoteAddr;
+}server_socket;
 #endif
