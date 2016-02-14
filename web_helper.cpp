@@ -139,7 +139,7 @@ int process_socket(int fd, int size)
     int n, bytes_to_read;
     char *bp, buf[size];
 
-    while(TRUE)
+    while(true)
     {
         bp = buf;
         bytes_to_read = size;
@@ -153,7 +153,7 @@ int process_socket(int fd, int size)
 
         send(fd, buf, size, 0);
         close(fd);
-        return TRUE;
+        return true;
     }
 
     close(fd);
