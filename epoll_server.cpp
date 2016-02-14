@@ -30,6 +30,7 @@ int child_process(int serverSocFD)
 {
         struct epoll_event events[EPOLL_QUEUE_LEN], event;
         epoll_fd = epoll_create(EPOLL_QUEUE_LEN);
+        int num_fds,i;
         if(epoll_fd == -1)
         {
                 error_handler("EPOLL CREATE");
@@ -40,9 +41,60 @@ int child_process(int serverSocFD)
         event.data.fd = serverSocFD;
         if (epoll_ctl (epoll_fd, EPOLL_CTL_ADD, serverSocFD, &event) == -1)
         {
-          SystemFatal("epoll_ctl");
+                SystemFatal("epoll_ctl");
         }
 
+        while(TRUE)
+        {
+                num_fds = epoll_wait(epoll_fd, events, EPOLL_QUEUE_LEN, -1);
+                if(num_fds < 0)
+                {
+                        error_handler("ERROR: EPOLL_WAIT");
+                }
+
+                for(i=0; i<num_fds; i++)
+                {
+                        //Error condition
+                        if(events[i].events & (EPOLLHUP | EPOLLERR))
+                        {
+                                fputs("epoll: EPOLLERR", stderr);
+                                close(events[i].data.fd);
+                                continue;
+                        }
+                        assert(events[i].events & EPOLLIN);
+
+                        //Server is receiving a connection request
+                        if(events[i].data.fd == serverSocFD)
+                        {
+                                int fd_new = accept(serverSocFD, 0,0);
+                                if (fd_new == -1)
+                                {
+                                        if (errno != EAGAIN && errno != EWOULDBLOCK)
+                                        {
+                                                error_handler("accept");
+                                        }
+                                        continue;
+                                }
+
+                                //Configure New Socket to NON Blocking
+                                if(fcntl(fd_new, F_SETFL, O_NONBLOCK | fcntl(fd_new, F_GETFL,0)) == -1)
+                                {
+                                        error_handler("fcntl");
+                                }
+
+                                //Add new socket to epoll loop
+                                event.data.fd = fd_new;
+                                if (epoll_ctl (epoll_fd, EPOLL_CTL_ADD, fd_new, &event) == -1)
+                                {
+                                        error_handler("epoll_ctl");
+                                }
+                                continue;
+                        }
+
+                        //IF one of the SOCKET has read data
+                        
+                }
+        }
 
 }
 
