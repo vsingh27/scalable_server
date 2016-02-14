@@ -93,7 +93,7 @@ int child_process(int serverSocFD)
                         }
 
                         //IF one of the SOCKET has read data
-                        if(!process_socket(events[i].data.fd))
+                        if(!process_socket(events[i].data.fd),BUFLEN)
                         {
                             close(events[i].data.fd);
                         }
