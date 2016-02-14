@@ -6,12 +6,13 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <strings.h>
+#include <string.h>
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include "web_helper.h"
 
-#define LISTENER_QUEUE  1024;
+#define LISTENER_QUEUE  1024
 
 void error_handler(const char* str)
 {
@@ -86,14 +87,14 @@ int server_socket_non_blocking(int port, char* hostName)
         //Configure NON Blocking
         if (fcntl (socket_fd, F_SETFL, O_NONBLOCK | fcntl (socket_fd, F_GETFL, 0)) == -1)
         {
-                error_handler("FCTL: while setting SERVER SOCKET NON Blocking")
+                error_handler("FCTL: while setting SERVER SOCKET NON Blocking");
         }
 
         //bind server socket to port
         memset(&hostAddr,0,sizeof(struct sockaddr_in));
         hostAddr.sin_family = AF_INET;
-        addr.sin_addr.s_addr = htonl(hostName);
-        addr.sin_port = htons(port);
+        hostAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+        hostAddr.sin_port = htons(port);
 
         if(bind(socket_fd, (struct sockaddr*) &hostAddr, sizeof(hostAddr)) == -1)
         {

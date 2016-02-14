@@ -8,6 +8,7 @@
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <netdb.h>
 #include <arpa/inet.h>
@@ -29,7 +30,7 @@
 int child_process(int serverSocFD)
 {
         struct epoll_event events[EPOLL_QUEUE_LEN], event;
-        epoll_fd = epoll_create(EPOLL_QUEUE_LEN);
+        int epoll_fd = epoll_create(EPOLL_QUEUE_LEN);
         int num_fds,i;
         if(epoll_fd == -1)
         {
@@ -41,7 +42,7 @@ int child_process(int serverSocFD)
         event.data.fd = serverSocFD;
         if (epoll_ctl (epoll_fd, EPOLL_CTL_ADD, serverSocFD, &event) == -1)
         {
-                SystemFatal("epoll_ctl");
+                error_handler("epoll_ctl");
         }
 
         while(TRUE)
@@ -92,14 +93,14 @@ int child_process(int serverSocFD)
                         }
 
                         //IF one of the SOCKET has read data
-                        
+
                 }
         }
 
 }
 
 
-int main(argc, char* argv[])
+int main(int argc, char* argv[])
 {
         //File descriptor for server socket
         int fdServerSocket;
@@ -112,15 +113,10 @@ int main(argc, char* argv[])
 
         char* hostName;
 
+        pid_t pid;
+
         switch(argc)
         {
-        case 1:
-        {
-                hostName = LOCAL_HOST;
-                serverPort = SERVER_TCP_PORT;
-                numProcesses = PROCESS_COUNT;
-                break;
-        }
         case 2:
         {
                 hostName = argv[1];
@@ -131,15 +127,15 @@ int main(argc, char* argv[])
         case 3:
         {
                 hostName = argv[1];
-                serverPort = argv[2];
+                serverPort = atoi(argv[2]);
                 numProcesses = PROCESS_COUNT;
                 break;
         }
         case 4:
         {
                 hostName = argv[1];
-                serverPort = argv[2];
-                numProcesses = argv[3];
+                serverPort = atoi(argv[2]);
+                numProcesses = atoi(argv[3]);
                 break;
         }
         default:
@@ -167,7 +163,7 @@ int main(argc, char* argv[])
                         break;
                 }
         }
-        for(int k =0; k<processCount; k++)
+        for(int k =0; k<numProcesses; k++)
         {
                 if(pid != 0)
                 {
