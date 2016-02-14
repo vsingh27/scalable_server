@@ -93,9 +93,15 @@ int child_process(int serverSocFD)
                         }
 
                         //IF one of the SOCKET has read data
+                        if(!process_socket(events[i].data.fd))
+                        {
+                            close(events[i].data.fd);
+                        }
 
                 }
         }
+        close(serverSocFD);
+        exit(EXIT_SUCCESS);
 
 }
 

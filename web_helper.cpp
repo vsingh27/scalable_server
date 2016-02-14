@@ -133,3 +133,29 @@ char* read_data(int sd, char* data, int size)
         }
         return data;
 }
+
+int process_socket(int fd, int size)
+{
+    int n, bytes_to_read;
+    char *bp, buf[size];
+
+    while(TRUE)
+    {
+        bp = buf;
+        bytes_to_read = size;
+        while((n = recv(fd,bp,bytes_to_read,0)) < size)
+        {
+            bp += n;
+            bytes_to_read -= n;
+        }
+
+        printf("Sending:%s\n", buf);
+
+        send(fd, buf, size, 0);
+        close(fd);
+        return TRUE;
+    }
+
+    close(fd);
+    return (0);
+}
