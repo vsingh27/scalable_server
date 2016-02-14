@@ -1,6 +1,6 @@
 #include "select_server.h"
 
-//friday 1925 revision
+//friday 20:10 revision
 //globals
 struct timeval start, end;
 pthread_t tm; //main thread
@@ -37,7 +37,7 @@ ClntStats * get_stats(char * ipAddress)
 
 	} else {
 
-		if ((srvr_stats = realloc(srvr_stats, sizeof (ClntStats) * (srvrStats_len + 1))) != NULL) {
+		if ((srvr_stats = (ClntStats*)realloc(srvr_stats, sizeof (ClntStats) * (srvrStats_len + 1))) != NULL) {
 			srvrStats_len++;
 
 			//Initialize server_stats
@@ -58,13 +58,13 @@ ClntStats * get_stats(char * ipAddress)
 
 }
 
-void* live_stats()
+void* live_stats(void*)
 {
 	int c = 0;
 	int p1 = 0, p2 = 0;
-	long p3 = 0, p4 = 0, p5 = 0, p6 = 0, p7 = 0, p8 = 0;
+	long p3 = 0, p4 = 0, p5 = 0, p6 = 0;
 	int t1 = 0, t2 = 0;
-	long t3 = 0, t4 = 0, t5 = 0, t6 = 0, t7 = 0, t8 = 0;
+	long t3 = 0, t4 = 0, t5 = 0, t6 = 0;
 
 	char line[108];
 	for (c = 0; c < 107; c++)
@@ -78,12 +78,12 @@ void* live_stats()
 		printf("\nElapsed Time: %.3fs\n", total_time);
 		printf("%-14s%-14s%-14s%-14s%-14s%-14s%-14s\n",\
 		"Clients",\
-		"Total Connections",\
-		"Active Connections",\
-		"Received Msg",\
-		"Msg/s",\
-		"Received Bytes",\
-		"Byte/s");
+		"Total",\
+		"Active",\
+		"MessagesRecv",\
+		"msg/sec",\
+		"BytesRecv",\
+		"B/s");
 		printf("%s\n", line);
 
 		for (c = 0; c < srvrStats_len; c++) {
@@ -137,10 +137,10 @@ void* live_stats()
 
 void* run_server(int serv_port)
 {
-	gettimeofday (&start, NULL);
+		gettimeofday (&start, NULL);
 
 	//start recording live stats
-	pthread_create(&tm, NULL, &live_stats, NULL);
+		pthread_create(&tm, NULL, live_stats, NULL);
 
 	int i, maxi, nready, arg, t;
 	int listen_sd, new_sd, sockfd, maxfd, client[FD_SETSIZE];

@@ -69,7 +69,7 @@ char* generate_data(char* data,int size)
         int k=0;
         for (int i=0; i< size; i++)
         {
-          if(k == 122)
+          if(k == 25)
           {
                   k = 0;
           }
