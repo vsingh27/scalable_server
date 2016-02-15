@@ -15,6 +15,12 @@
 #include <strings.h>
 #include <unistd.h>
 #include <signal.h>
+#include <map>
+#include <utility>
+#include <semaphore.h>
+#include <sys/mman.h>
+#include <iostream>
+#include <fstream>
 #include "web_helper.h"
 
 #define TRUE    1
