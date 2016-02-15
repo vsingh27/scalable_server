@@ -232,17 +232,19 @@ void* live_stats(void*)
 --
 -- PROGRAMMERS: Rizwan Ahmed, Vishav Singh
 --
+-- PARAMETERS: 
+--   int serv_port - the server socket's port number
+--
 -- RETURNS: 0 on exit
 --
--- NOTES: Main entry point of the program. Merely gets rid of the need to flush
--- everytime something is printed to standard output and calls the server loop.
+-- NOTES: Sets up sockets and uses select() to handle connections.
 ---------------------------------------------------------------------------------------*/
 void* run_server(int serv_port)
 {
-		gettimeofday (&start, NULL);
+	gettimeofday (&start, NULL);
 
 	//start recording live stats
-		pthread_create(&tm, NULL, live_stats, NULL);
+	pthread_create(&tm, NULL, live_stats, NULL);
 
 	int i, maxi, nready, arg, t;
 	int listen_sd, new_sd, sockfd, maxfd, client[FD_SETSIZE];
@@ -252,6 +254,12 @@ void* run_server(int serv_port)
 	fd_set rset, allset;
 	socklen_t client_len;
 	int port = serv_port; // Use the default port
+	
+	//SOCKET OPTIONS for LINGER
+        struct linger linger;
+        memset(&linger,0,sizeof(linger));
+        linger.l_onoff = 1;
+        linger.l_linger = 0;
 
 	//create the socket
 	if ((listen_sd = socket(AF_INET, SOCK_STREAM,0))== -1)
@@ -278,7 +286,13 @@ void* run_server(int serv_port)
 
 	//set the socket to non-blocking
 	fcntl(listen_sd, F_SETFL, O_NONBLOCK, 0);
-
+	
+        //Set SOCKET OPTION LINGER
+        if(setsockopt(listen_sd, SOL_SOCKET, SO_LINGER,(char*)&linger, sizeof(linger)) == -1)
+        {
+                SystemFatal("Failed while setting SOCKET Options: SO_LINGER");
+        }
+        
 	maxfd = listen_sd; // initialize
 	maxi = -1; // index into client[] array
 

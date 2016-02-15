@@ -62,6 +62,14 @@ int child_process(int serverSocFD, char* hostname, int port)
         struct epoll_event events[EPOLL_QUEUE_LEN], event;
         int epoll_fd = epoll_create(EPOLL_QUEUE_LEN);
         int num_fds,i;
+        client_info clientstats_struc;
+
+        server_stats serverstats_struc;
+         server_stats* ptrStats = &serverstats_struc;
+          //Stats Add Client Info
+
+        clientstats_struc.hostName = hostname;
+        clientstats_struc.port = port;
 
        unsigned int pid = (unsigned int)getpid();
 
@@ -83,14 +91,7 @@ int child_process(int serverSocFD, char* hostname, int port)
 
         while(TRUE)
         {
-            client_info clientstats_struc;
 
-            server_stats serverstats_struc;
-             server_stats* ptrStats = &serverstats_struc;
-              //Stats Add Client Info
-
-            clientstats_struc.hostName = hostname;
-            clientstats_struc.port = port;
                 int numCount;
                 num_fds = epoll_wait(epoll_fd, events, EPOLL_QUEUE_LEN, -1);
                 if(num_fds < 0)
@@ -101,7 +102,7 @@ int child_process(int serverSocFD, char* hostname, int port)
                 for(i=0; i<num_fds; i++)
                 {
                         //Error condition
-                        numCount++;
+
                         if(events[i].events & (EPOLLHUP | EPOLLERR))
                         {
                                 fputs("epoll: EPOLLERR", stderr);
@@ -113,11 +114,8 @@ int child_process(int serverSocFD, char* hostname, int port)
                         //Server is receiving a connection request
                         if(events[i].data.fd == serverSocFD)
                         {
-
+                            numCount++;
                                 int fd_new = accept(serverSocFD, 0,0);
-
-
-
                                 if (fd_new == -1)
                                 {
                                         if (errno != EAGAIN && errno != EWOULDBLOCK)
@@ -141,16 +139,17 @@ int child_process(int serverSocFD, char* hostname, int port)
                                 continue;
                         }
                         //IF one of the SOCKET has read data
-                        if(!process_socket(events[i].data.fd,BUFLEN,ptrStats))
+                        if(!process_socket(events[i].data.fd,BUFLEN))
                         {
                                 close(events[i].data.fd);
                         }
-                        serverstats_struc.numConnections = numCount;
-                        serverstats_struc.bytesSent = (int)BUFLEN;
-                        serverstats_struc.bytesRec = (int)BUFLEN;
-                        serverstats_struc.clientInfo = clientstats_struc;
-                        ptrMap->insert(pair<unsigned int, server_stats>(pid,serverstats_struc));
+
                 }
+                serverstats_struc.numConnections = numCount;
+                serverstats_struc.bytesSent = (int)BUFLEN;
+                serverstats_struc.bytesRec = (int)BUFLEN;
+                serverstats_struc.clientInfo = clientstats_struc;
+                ptrMap->insert(pair<unsigned int, server_stats>(pid,serverstats_struc));
               printf("Number of Connections%d\n", numCount);
         }
         close(serverSocFD);
