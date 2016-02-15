@@ -1,7 +1,8 @@
 /*---------------------------------------------------------------------------------------
 --	SOURCE FILE: multi_thread_srvr.cpp -   A simple multiplexed echo server using TCP
 --
---	PROGRAM: mt_srvr.exe
+--	PROGRAM: mt_srvr
+--	g++ -Wall -o mt_srvr multi_thread_srvr.cpp -lpthread
 --
 --	FUNCTIONS:   int main(int argc, char *argv[])
 --               void *serve_clients(void *ptr)
