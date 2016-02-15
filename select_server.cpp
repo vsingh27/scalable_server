@@ -379,46 +379,46 @@ void* run_server(int serv_port)
 		}
 	}
 
-	/*---------------------------------------------------------------------------------------
-	-- FUNCTION: SystemFatal
-	--
-	-- DESIGNER: Aman Abdulla
-	--
-	-- PROGRAMMER: Aman Abdulla
-	--
-	-- PARAMETERS:
-	--  const char* message - the error message to be stored in errno
-	--
-	-- RETURNS: EXIT_FAILURE
-	--
-	-- NOTES: Prints an error message and aborts the program.
-	---------------------------------------------------------------------------------------*/
-	static void SystemFatal(const char* message)
-	{
-		perror(message);
-		exit(EXIT_FAILURE);
-	}
+/*---------------------------------------------------------------------------------------
+-- FUNCTION: SystemFatal
+--
+-- DESIGNER: Aman Abdulla
+--
+-- PROGRAMMER: Aman Abdulla
+--
+-- PARAMETERS:
+--  const char* message - the error message to be stored in errno
+--
+-- RETURNS: EXIT_FAILURE
+--
+-- NOTES: Prints an error message and aborts the program.
+---------------------------------------------------------------------------------------*/
+static void SystemFatal(const char* message)
+{
+	perror(message);
+	exit(EXIT_FAILURE);
+}
 
-	/*---------------------------------------------------------------------------------------
-	-- FUNCTION: kill_server
-	--
-	-- DATE: February 11, 2016
-	--
-	-- DESIGNERS: Rizwan Ahmed, Vishav Singh
-	--
-	-- PROGRAMMERS: Rizwan Ahmed, Vishav Singh
-	--
-	-- PARAMETERS:
-	--  int sig - signal interrupt that will occur when user presses CTRL+C
-	--
-	-- RETURNS: 0 on exit
-	--
-	-- NOTES: This is the signal handler that kills the main thread and closes the
-	-- server socket when user presses CTRL+C.
-	---------------------------------------------------------------------------------------*/
-	void kill_server(int sig)
-	{
-		pthread_kill(tm, 0);
-		close(fd_server);
-		exit(0);
-	}
+/*---------------------------------------------------------------------------------------
+-- FUNCTION: kill_server
+--
+-- DATE: February 11, 2016
+--
+-- DESIGNERS: Rizwan Ahmed, Vishav Singh
+--
+-- PROGRAMMERS: Rizwan Ahmed, Vishav Singh
+--
+-- PARAMETERS:
+--  int sig - signal interrupt that will occur when user presses CTRL+C
+--
+-- RETURNS: 0 on exit
+--
+-- NOTES: This is the signal handler that kills the main thread and closes the
+-- server socket when user presses CTRL+C.
+---------------------------------------------------------------------------------------*/
+void kill_server(int sig)
+{
+	pthread_kill(tm, 0);
+	close(fd_server);
+	exit(0);
+}
