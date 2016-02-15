@@ -91,11 +91,10 @@ void print_stats(int)
                 unsigned int key = it->first;
                 //printf("The key is %u\n",key );
                 stats value = it->second;
-                totalRequests = totalRequests+ value.numRequests;
+                //totalRequests = totalRequests+ value.numRequests;
                 statistics_file<<key<<","<<value.timeToServe<<","<<value.bytesSent<<","<<value.numRequests<<"\n";
 
         }
-        statistics_file<<"Total Requests"<<","<<","<<totalRequests<<"\n";
         statistics_file.close();
         sem_post(printLock);
         exit(0);
@@ -103,11 +102,12 @@ void print_stats(int)
 
 int worker_process(char* serverName, int port, char* sendData, char* recData, int numReuest)
 {
-        int sd = establish_tcp_connection(serverName, port);
-        timeval tim;
+
         unsigned int pid = (unsigned int)getpid();
 
         for (size_t i = 0; i < numReuest; i++) {
+                int sd = establish_tcp_connection(serverName, port);
+                timeval tim;
                 gettimeofday(&tim,NULL);
                 double t1 = tim.tv_sec+(tim.tv_usec);
                 int num_bytes = 0;
@@ -122,8 +122,9 @@ int worker_process(char* serverName, int port, char* sendData, char* recData, in
                 ptrMap->insert(pair<unsigned int, stats>(pid,stats_struc));
                 printf ("%s\n", recData);
                 fflush(stdout);
+                    close (sd);
         }
-        close (sd);
+
         return EXIT_SUCCESS;
 }
 
@@ -226,6 +227,5 @@ int main(int argc, char **argv)
                         pid_t childpid = wait(NULL);
                 }
         }
-
         return 0;
 }
