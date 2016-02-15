@@ -24,14 +24,51 @@
 #define SERVER_TCP_PORT 7000
 #define PROCESS_COUNT            5      //Default No of Process to Spawn
 #define LOCAL_HOST "localhost"
+#define  STATS_FILE              "./epoll_server_stats.csv"
 
 
 
-int child_process(int serverSocFD)
+
+map<client_info, server_stats> serverStatMap;
+map<client_info, server_stats>* ptrMap = &serverStatMap;
+sem_t* countLock = 0;
+sem_t* printLock = 0;
+
+void print_statistics(int)
+{
+        sem_wait(printLock);
+        ofstream statistics_file;
+        statistics_file.open (STATS_FILE, ios::out | ios::app | ios::binary);
+        for( map<client_info, server_stats>::const_iterator it = serverStatMap.begin(); it != serverStatMap.end(); ++it )
+        {
+                client_info key = it->first;
+                server_stats value = it->second;
+                statistics_file<<key.hostname << "," <<key.port << "," << key.numConnections << "," <<value.bytesSent << value.bytesRec<<"\n";
+        }
+        statistics_file.close();
+        sem_post(printLock);
+        exit(0);
+
+}
+
+
+int child_process(int serverSocFD, char* hostname, int port)
 {
         struct epoll_event events[EPOLL_QUEUE_LEN], event;
         int epoll_fd = epoll_create(EPOLL_QUEUE_LEN);
         int num_fds,i;
+        unsigned int numCount = 0;
+
+        client_info clientstats_struc;
+
+        server_stats serverstats_struc;
+        server_stats* ptrStats = &serverstats_struc;
+        //Stats Add Client Info
+
+        clientstats_struc.hostName = hostName;
+        clientstats_struc.host = port;
+        //serverstats_struc.clientInfo = clientstats_struc;
+
         if(epoll_fd == -1)
         {
                 error_handler("EPOLL CREATE");
@@ -68,6 +105,8 @@ int child_process(int serverSocFD)
                         if(events[i].data.fd == serverSocFD)
                         {
                                 int fd_new = accept(serverSocFD, 0,0);
+                                numCount++;
+
                                 if (fd_new == -1)
                                 {
                                         if (errno != EAGAIN && errno != EWOULDBLOCK)
@@ -93,12 +132,17 @@ int child_process(int serverSocFD)
                         }
 
                         //IF one of the SOCKET has read data
-                        if(!process_socket(events[i].data.fd,BUFLEN))
+                        if(!process_socket(events[i].data.fd,BUFLEN,ptrStats ))
                         {
-                            close(events[i].data.fd);
+                                close(events[i].data.fd);
                         }
 
                 }
+
+                clientstats_struc.numConnections = numCount;
+                serverstats_struc.clientInfo = clientstats_struc;
+                ptrMap->insert(pair<client_info, server_stats>(clientstats_struc,serverstats_struc));
+                printf("Number of Connections%s\n", numCount);
         }
         close(serverSocFD);
         exit(EXIT_SUCCESS);
@@ -108,6 +152,7 @@ int child_process(int serverSocFD)
 
 int main(int argc, char* argv[])
 {
+        signal(SIGINT, print_statistics);
         //File descriptor for server socket
         int fdServerSocket;
 
@@ -151,10 +196,27 @@ int main(int argc, char* argv[])
         }
         }
 
+
         fdServerSocket = server_socket_non_blocking(serverPort, hostName);
         if(fdServerSocket == -1)
         {
                 error_handler("SERVER SOCKET");
+        }
+
+        printLock = (sem_t*) mmap(0,sizeof(sem_t),PROT_READ|PROT_WRITE,MAP_SHARED|MAP_ANONYMOUS,-1,0);
+
+
+        if (printLock == MAP_FAILED)
+        {
+                error_handler("Print Lock mmap");
+        }
+
+        countLock = (sem_t*) mmap(0,sizeof(sem_t),PROT_READ|PROT_WRITE,MAP_SHARED|MAP_ANONYMOUS,-1,0);
+
+
+        if (countLock == MAP_FAILED)
+        {
+                error_handler("Count Lock mmap");
         }
 
         for(int j=0; j<numProcesses; j++)

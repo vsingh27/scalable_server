@@ -11,7 +11,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include "web_helper.h"
-
 #define LISTENER_QUEUE  1024
 
 void error_handler(const char* str)
@@ -134,24 +133,27 @@ char* read_data(int sd, char* data, int size)
         return data;
 }
 
-int process_socket(int fd, int size)
+int process_socket(int fd, int size, server_stats* server_statistics)
 {
-    int n, bytes_to_read;
+    int n, bytes_to_read, bytes_sent;
     char *bp, buf[size];
 
     while(true)
     {
         bp = buf;
         bytes_to_read = size;
+
         while((n = recv(fd,bp,bytes_to_read,0)) < size)
         {
+            server_statistics->bytesRec = n;
             bp += n;
             bytes_to_read -= n;
         }
 
         printf("Sending:%s\n", buf);
 
-        send(fd, buf, size, 0);
+        bytes_sent = send(fd, buf, size, 0);
+        server_statistics->bytesSent = bytes_sent;
         close(fd);
         return true;
     }

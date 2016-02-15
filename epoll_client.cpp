@@ -89,7 +89,7 @@ void print_stats(int)
         {
 
                 unsigned int key = it->first;
-                printf("The key is %u\n",key );
+                //printf("The key is %u\n",key );
                 stats value = it->second;
                 totalRequests = totalRequests+ value.numRequests;
                 statistics_file<<key<<","<<value.timeToServe<<","<<value.bytesSent<<","<<value.numRequests<<"\n";
