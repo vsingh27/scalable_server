@@ -1,7 +1,33 @@
+/*---------------------------------------------------------------------------------------
+--	SOURCE FILE: select_server.cpp -   A simple multiplexed echo server using TCP
+--
+--	PROGRAM: sel_srvr
+--	g++ -Wall -o sel_srvr select_server.cpp -lpthread
+--
+--	FUNCTIONS:   int main(int argc, char *argv[])
+--               void *serve_clients(void *ptr)
+--               void accept_connect(int fd)
+--               int find_free_thread(void)
+--               int find_free_client(int thread_num)
+--               void kill_server(int sig)
+--
+--	DATE: February 11, 2016
+--
+--	DESIGNERS: Rizwan Ahmed, Vishav Singh
+--
+--
+--	PROGRAMMER: Rizwan Ahmed, Vishav Singh
+--
+--	NOTES:
+--	The program will accept TCP connections from multiple client machines.
+-- 	The program will read data from each client socket and simply echo it back.
+--	The program will display live statistics of active connections, requests
+-- 	received, and total amount of data received. The program utilizes the select()
+-- 	system call to handle client requests.
+---------------------------------------------------------------------------------------*/
 #include "select_server.h"
 
-//friday 20:10 revision
-//globals
+/*global variables*/
 struct timeval start, end;
 pthread_t tm; //main thread
 int set_debug = 0;
@@ -9,14 +35,46 @@ ClntStats * srvr_stats;
 int srvrStats_len = 0;
 int fd_server;
 
+/*---------------------------------------------------------------------------------------
+-- FUNCTION: main
+--
+-- DATE: February 11, 2016
+--
+-- DESIGNERS: Rizwan Ahmed, Vishav Singh
+--
+-- PROGRAMMERS: Rizwan Ahmed, Vishav Singh
+--
+-- RETURNS: 0 on exit
+--
+-- NOTES: Main entry point of the program. Merely gets rid of the need to flush
+-- everytime something is printed to standard output and calls the server loop.
+---------------------------------------------------------------------------------------*/
 int main(int argc, char *argv[])
 {
-	//(void)signal(SIGINT, kill_server);
+	(void)signal(SIGINT, kill_server);
 	setbuf(stdout, NULL);
 	run_server(SERVER_PORT);
 
+	return 0;
+
 }
 
+/*---------------------------------------------------------------------------------------
+-- FUNCTION: client_exists
+--
+-- DATE: February 11, 2016
+--
+-- DESIGNERS: Rizwan Ahmed, Vishav Singh
+--
+-- PROGRAMMERS: Rizwan Ahmed, Vishav Singh
+--
+-- PARAMETERS:
+--  char * checkAddress - the client address to check if they exist
+--
+-- RETURNS: 0 on success, -1 on failure
+--
+-- NOTES: Checks if the client exists in the stats struct.
+---------------------------------------------------------------------------------------*/
 int client_exists(char * checkAddress)
 {
 	int c;
@@ -29,6 +87,23 @@ int client_exists(char * checkAddress)
 	return -1;
 }
 
+/*---------------------------------------------------------------------------------------
+-- FUNCTION: get_stats
+--
+-- DATE: February 11, 2016
+--
+-- DESIGNERS: Rizwan Ahmed, Vishav Singh
+--
+-- PROGRAMMERS: Rizwan Ahmed, Vishav Singh
+--
+-- PARAMETERS:
+-- char * ipAddress - the IP address of the client stats to get
+--
+-- RETURNS: Pointer to client statistics data struct array.
+--
+-- NOTES: Looks for the pointer to the struct that holds the IP address and
+-- returns it if the client exists or creates a new struct and returns that instead.
+---------------------------------------------------------------------------------------*/
 ClntStats * get_stats(char * ipAddress)
 {
 	int c;
@@ -58,6 +133,19 @@ ClntStats * get_stats(char * ipAddress)
 
 }
 
+/*---------------------------------------------------------------------------------------
+-- FUNCTION: live_stats
+--
+-- DATE: February 11, 2016
+--
+-- DESIGNERS: Rizwan Ahmed, Vishav Singh
+--
+-- PROGRAMMERS: Rizwan Ahmed, Vishav Singh
+--
+-- RETURNS: void
+--
+-- NOTES: Prints live statistics of active connections in a loop.
+---------------------------------------------------------------------------------------*/
 void* live_stats(void*)
 {
 	int c = 0;
@@ -135,6 +223,20 @@ void* live_stats(void*)
 
 }
 
+/*---------------------------------------------------------------------------------------
+-- FUNCTION: run_server
+--
+-- DATE: February 11, 2016
+--
+-- DESIGNERS: Rizwan Ahmed, Vishav Singh
+--
+-- PROGRAMMERS: Rizwan Ahmed, Vishav Singh
+--
+-- RETURNS: 0 on exit
+--
+-- NOTES: Main entry point of the program. Merely gets rid of the need to flush
+-- everytime something is printed to standard output and calls the server loop.
+---------------------------------------------------------------------------------------*/
 void* run_server(int serv_port)
 {
 		gettimeofday (&start, NULL);
@@ -173,6 +275,9 @@ void* run_server(int serv_port)
 	// Listen for connections
 	// queue up to LISTENQ connect requests
 	listen(listen_sd, MAX_CLIENTS);
+
+	//set the socket to non-blocking
+	fcntl(listen_sd, F_SETFL, O_NONBLOCK, 0);
 
 	maxfd = listen_sd; // initialize
 	maxi = -1; // index into client[] array
@@ -258,7 +363,6 @@ void* run_server(int serv_port)
 
 					if (n == 0) // connection closed by client
 					{
-						//printf("(sockfd: %d) Remote Address:  %s closed connection\n", sockfd, inet_ntoa(client_addr.sin_addr));
 						close(sockfd);
 						FD_CLR(sockfd, &allset);
 						client[i] = -1;
@@ -275,15 +379,46 @@ void* run_server(int serv_port)
 		}
 	}
 
-	static void SystemFatal(const char* message)
-	{
-		perror(message);
-		exit(EXIT_FAILURE);
-	}
+/*---------------------------------------------------------------------------------------
+-- FUNCTION: SystemFatal
+--
+-- DESIGNER: Aman Abdulla
+--
+-- PROGRAMMER: Aman Abdulla
+--
+-- PARAMETERS:
+--  const char* message - the error message to be stored in errno
+--
+-- RETURNS: EXIT_FAILURE
+--
+-- NOTES: Prints an error message and aborts the program.
+---------------------------------------------------------------------------------------*/
+static void SystemFatal(const char* message)
+{
+	perror(message);
+	exit(EXIT_FAILURE);
+}
 
-	void kill_server(int sig)
-	{
-		pthread_kill(tm, 0);
-		close(fd_server);
-		exit(0);
-	}
+/*---------------------------------------------------------------------------------------
+-- FUNCTION: kill_server
+--
+-- DATE: February 11, 2016
+--
+-- DESIGNERS: Rizwan Ahmed, Vishav Singh
+--
+-- PROGRAMMERS: Rizwan Ahmed, Vishav Singh
+--
+-- PARAMETERS:
+--  int sig - signal interrupt that will occur when user presses CTRL+C
+--
+-- RETURNS: 0 on exit
+--
+-- NOTES: This is the signal handler that kills the main thread and closes the
+-- server socket when user presses CTRL+C.
+---------------------------------------------------------------------------------------*/
+void kill_server(int sig)
+{
+	pthread_kill(tm, 0);
+	close(fd_server);
+	exit(0);
+}
