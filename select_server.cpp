@@ -232,10 +232,12 @@ void* live_stats(void*)
 --
 -- PROGRAMMERS: Rizwan Ahmed, Vishav Singh
 --
+-- PARAMETERS: 
+--   int serv_port - the server socket's port number
+--
 -- RETURNS: 0 on exit
 --
--- NOTES: Main entry point of the program. Merely gets rid of the need to flush
--- everytime something is printed to standard output and calls the server loop.
+-- NOTES: Sets up sockets and uses select() to handle connections.
 ---------------------------------------------------------------------------------------*/
 void* run_server(int serv_port)
 {
