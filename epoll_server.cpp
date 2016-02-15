@@ -225,7 +225,7 @@ int main(int argc, char* argv[])
                 switch(pid)
                 {
                 case 0:
-                        child_process(fdServerSocket);
+                        child_process(fdServerSocket, hostName, port);
                         kill(getpid(), SIGINT);
                         exit(0);
                         break;
