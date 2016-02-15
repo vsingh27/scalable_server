@@ -14,7 +14,7 @@
 #include <arpa/inet.h>
 #include <strings.h>
 #include <unistd.h>
-#include <signal.h>
+#include <csignal>
 #include <map>
 #include <utility>
 #include <semaphore.h>
@@ -30,14 +30,13 @@
 #define SERVER_TCP_PORT 7000
 #define PROCESS_COUNT            5      //Default No of Process to Spawn
 #define LOCAL_HOST "localhost"
-#define  STATS_FILE              "./epoll_server_stats.csv"
+#define  STATS_FILE  "./epoll_server_stats.csv"
 
 using namespace std;
 
 
 map<unsigned int, server_stats> serverStatMap;
 map<unsigned int, server_stats>* ptrMap = &serverStatMap;
-sem_t* countLock = 0;
 sem_t* printLock = 0;
 
 void print_statistics(int)
@@ -49,31 +48,24 @@ void print_statistics(int)
         {
                 unsigned int key = it->first;
                 server_stats value = it->second;
-                statistics_file<<value.clientInfo.hostName << "," <<value.clientInfo.port << "," << value.clientInfo.numConnections << "," <<value.bytesSent << value.bytesRec<<"\n";
+                statistics_file<<value.clientInfo.hostName << "," <<value.clientInfo.port << "," << value.numConnections << "," <<value.bytesSent<<"," << value.bytesRec<<"\n";
         }
         statistics_file.close();
         sem_post(printLock);
         exit(0);
-
 }
 
 
 int child_process(int serverSocFD, char* hostname, int port)
 {
+//  printf("I am here");
         struct epoll_event events[EPOLL_QUEUE_LEN], event;
         int epoll_fd = epoll_create(EPOLL_QUEUE_LEN);
         int num_fds,i;
-        unsigned int numCount = 0;
-          unsigned int pid = (unsigned int)getpid();
 
-        client_info clientstats_struc;
+       unsigned int pid = (unsigned int)getpid();
 
-        server_stats serverstats_struc;
-        server_stats* ptrStats = &serverstats_struc;
-        //Stats Add Client Info
 
-        clientstats_struc.hostName = hostname;
-        clientstats_struc.port = port;
         //serverstats_struc.clientInfo = clientstats_struc;
 
         if(epoll_fd == -1)
@@ -91,6 +83,15 @@ int child_process(int serverSocFD, char* hostname, int port)
 
         while(TRUE)
         {
+            client_info clientstats_struc;
+
+            server_stats serverstats_struc;
+             server_stats* ptrStats = &serverstats_struc;
+              //Stats Add Client Info
+
+            clientstats_struc.hostName = hostname;
+            clientstats_struc.port = port;
+                int numCount;
                 num_fds = epoll_wait(epoll_fd, events, EPOLL_QUEUE_LEN, -1);
                 if(num_fds < 0)
                 {
@@ -100,6 +101,7 @@ int child_process(int serverSocFD, char* hostname, int port)
                 for(i=0; i<num_fds; i++)
                 {
                         //Error condition
+                        numCount++;
                         if(events[i].events & (EPOLLHUP | EPOLLERR))
                         {
                                 fputs("epoll: EPOLLERR", stderr);
@@ -111,8 +113,10 @@ int child_process(int serverSocFD, char* hostname, int port)
                         //Server is receiving a connection request
                         if(events[i].data.fd == serverSocFD)
                         {
+
                                 int fd_new = accept(serverSocFD, 0,0);
-                                numCount++;
+
+
 
                                 if (fd_new == -1)
                                 {
@@ -126,9 +130,8 @@ int child_process(int serverSocFD, char* hostname, int port)
                                 //Configure New Socket to NON Blocking
                                 if(fcntl(fd_new, F_SETFL, O_NONBLOCK | fcntl(fd_new, F_GETFL,0)) == -1)
                                 {
-                                        error_handler("fcntl");
+                                  error_handler("fcntl");
                                 }
-
                                 //Add new socket to epoll loop
                                 event.data.fd = fd_new;
                                 if (epoll_ctl (epoll_fd, EPOLL_CTL_ADD, fd_new, &event) == -1)
@@ -137,22 +140,21 @@ int child_process(int serverSocFD, char* hostname, int port)
                                 }
                                 continue;
                         }
-
                         //IF one of the SOCKET has read data
-                        if(!process_socket(events[i].data.fd,BUFLEN,ptrStats ))
+                        if(!process_socket(events[i].data.fd,BUFLEN,ptrStats))
                         {
                                 close(events[i].data.fd);
                         }
-
+                        serverstats_struc.numConnections = numCount;
+                        serverstats_struc.bytesSent = (int)BUFLEN;
+                        serverstats_struc.bytesRec = (int)BUFLEN;
+                        serverstats_struc.clientInfo = clientstats_struc;
+                        ptrMap->insert(pair<unsigned int, server_stats>(pid,serverstats_struc));
                 }
-
-                clientstats_struc.numConnections = numCount;
-                serverstats_struc.clientInfo = clientstats_struc;
-                ptrMap->insert(pair<unsigned int, server_stats>(pid,serverstats_struc));
-                printf("Number of Connections%s\n", numCount);
+              printf("Number of Connections%d\n", numCount);
         }
         close(serverSocFD);
-        exit(EXIT_SUCCESS);
+        return EXIT_SUCCESS;
 
 }
 
@@ -203,7 +205,7 @@ int main(int argc, char* argv[])
         }
         }
 
-
+         printf("I am here");
         fdServerSocket = server_socket_non_blocking(serverPort, hostName);
         if(fdServerSocket == -1)
         {
@@ -217,18 +219,16 @@ int main(int argc, char* argv[])
         {
                 error_handler("Print Lock mmap");
         }
-
-        countLock = (sem_t*) mmap(0,sizeof(sem_t),PROT_READ|PROT_WRITE,MAP_SHARED|MAP_ANONYMOUS,-1,0);
-
-
-        if (countLock == MAP_FAILED)
+        if (sem_init(printLock,1,1) < 0)
         {
-                error_handler("Count Lock mmap");
+                error_handler("sem_init");
         }
 
         for(int j=0; j<numProcesses; j++)
         {
+
                 pid = fork();
+
                 switch(pid)
                 {
                 case 0:
@@ -246,6 +246,6 @@ int main(int argc, char* argv[])
                 }
         }
 
-        return 0;
+      return 0;
 
 }

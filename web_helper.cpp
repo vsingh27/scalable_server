@@ -149,9 +149,7 @@ int process_socket(int fd, int size, server_stats* server_statistics)
             bp += n;
             bytes_to_read -= n;
         }
-
-        printf("Sending:%s\n", buf);
-
+        //printf("Sending:%s\n", buf);
         bytes_sent = send(fd, buf, size, 0);
         server_statistics->bytesSent = bytes_sent;
         close(fd);
@@ -159,5 +157,5 @@ int process_socket(int fd, int size, server_stats* server_statistics)
     }
 
     close(fd);
-    return (0);
+    return false;
 }

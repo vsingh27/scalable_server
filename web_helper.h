@@ -19,15 +19,16 @@ typedef struct
 {
     char* hostName;
     unsigned int port;
-    unsigned int numConnections;
+
 }client_info;
 
 typedef struct
 {
 
     client_info clientInfo;
-    unsigned int bytesSent;
-    unsigned int bytesRec;
+    int numConnections;
+    int bytesSent;
+    int bytesRec;
 }server_stats;
 void error_handler(const char* str);
 int establish_tcp_connection(char* serverName, int port);
