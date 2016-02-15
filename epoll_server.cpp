@@ -32,11 +32,11 @@
 #define LOCAL_HOST "localhost"
 #define  STATS_FILE              "./epoll_server_stats.csv"
 
+using namespace std;
 
 
-
-map<client_info, server_stats> serverStatMap;
-map<client_info, server_stats>* ptrMap = &serverStatMap;
+map<unsigned int, server_stats> serverStatMap;
+map<unsigned int, server_stats>* ptrMap = &serverStatMap;
 sem_t* countLock = 0;
 sem_t* printLock = 0;
 
@@ -45,11 +45,11 @@ void print_statistics(int)
         sem_wait(printLock);
         ofstream statistics_file;
         statistics_file.open (STATS_FILE, ios::out | ios::app | ios::binary);
-        for( map<client_info, server_stats>::const_iterator it = serverStatMap.begin(); it != serverStatMap.end(); ++it )
+        for( map<unsigned int, server_stats>::const_iterator it = serverStatMap.begin(); it != serverStatMap.end(); ++it )
         {
-                client_info key = it->first;
+                unsigned int key = it->first;
                 server_stats value = it->second;
-                statistics_file<<key.hostname << "," <<key.port << "," << key.numConnections << "," <<value.bytesSent << value.bytesRec<<"\n";
+                statistics_file<<value.clientInfo.hostName << "," <<value.clientInfo.port << "," << value.clientInfo.numConnections << "," <<value.bytesSent << value.bytesRec<<"\n";
         }
         statistics_file.close();
         sem_post(printLock);
@@ -64,6 +64,7 @@ int child_process(int serverSocFD, char* hostname, int port)
         int epoll_fd = epoll_create(EPOLL_QUEUE_LEN);
         int num_fds,i;
         unsigned int numCount = 0;
+          unsigned int pid = (unsigned int)getpid();
 
         client_info clientstats_struc;
 
@@ -71,8 +72,8 @@ int child_process(int serverSocFD, char* hostname, int port)
         server_stats* ptrStats = &serverstats_struc;
         //Stats Add Client Info
 
-        clientstats_struc.hostName = hostName;
-        clientstats_struc.host = port;
+        clientstats_struc.hostName = hostname;
+        clientstats_struc.port = port;
         //serverstats_struc.clientInfo = clientstats_struc;
 
         if(epoll_fd == -1)
@@ -147,7 +148,7 @@ int child_process(int serverSocFD, char* hostname, int port)
 
                 clientstats_struc.numConnections = numCount;
                 serverstats_struc.clientInfo = clientstats_struc;
-                ptrMap->insert(pair<client_info, server_stats>(clientstats_struc,serverstats_struc));
+                ptrMap->insert(pair<unsigned int, server_stats>(pid,serverstats_struc));
                 printf("Number of Connections%s\n", numCount);
         }
         close(serverSocFD);
@@ -231,7 +232,7 @@ int main(int argc, char* argv[])
                 switch(pid)
                 {
                 case 0:
-                        child_process(fdServerSocket, hostName, port);
+                        child_process(fdServerSocket, hostName, serverPort);
                         kill(getpid(), SIGINT);
                         exit(0);
                         break;
